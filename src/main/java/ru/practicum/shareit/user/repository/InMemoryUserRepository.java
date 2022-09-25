@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Slf4j
 @Repository
-public class inMemoryUserRepository implements UserRepository {
+public class InMemoryUserRepository implements UserRepository {
 
     private final Map<Long, User> users = new HashMap<>();
     private Long lastId = 0L;
