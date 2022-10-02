@@ -14,36 +14,37 @@ import java.util.stream.Collectors;
 public class InMemoryItemRepository implements ItemRepository {
 
     private final Map<Long, Item> items = new HashMap<>();
-    private Long lastId = 0L;
+    private Long lastId = 1L;
 
     @Override
-    public Item addItem(Item item) {
-        item.setId(generateId());
+    public Item add(Item item) {
+        item.setId(lastId++);
         items.put(item.getId(), item);
-        return items.get(item.getId());
+        return item;
     }
 
     @Override
-    public Item updateItem(Item item) {
-        checkItemExists(item.getId());
+    public Item update(Item item) {
+        checkAvailability(item.getId());
         items.replace(item.getId(), item);
-        return items.get(item.getId());
+        return item;
     }
 
     @Override
-    public Item getItem(Long itemId) {
-        checkItemExists(itemId);
+    public Item get(Long itemId) {
+        checkAvailability(itemId);
         return items.get(itemId);
     }
 
     @Override
-    public Collection<Item> getUsersItems(Long userId) {
+    public Collection<Item> getForUser(Long userId) {
         return items.values().stream()
-                .filter((item) -> item.getOwner().getId().equals(userId)).collect(Collectors.toList());
+                .filter((item) -> item.getOwner().getId().equals(userId))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Collection<Item> searchItems(String searchRequest) {
+    public Collection<Item> search(String searchRequest) {
         if (searchRequest.isEmpty()) {
             return new ArrayList<>();
         }
@@ -54,11 +55,7 @@ public class InMemoryItemRepository implements ItemRepository {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Long generateId() {
-        return ++lastId;
-    }
-
-    private void checkItemExists(Long itemId) {
+    private void checkAvailability(Long itemId) {
         if (!items.containsKey(itemId)) {
             throw new EntityNotFoundException((String.format("Вещь с id: %s не найдена.", itemId)));
         }

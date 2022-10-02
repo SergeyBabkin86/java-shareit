@@ -15,45 +15,41 @@ import java.util.Map;
 public class InMemoryUserRepository implements UserRepository {
 
     private final Map<Long, User> users = new HashMap<>();
-    private Long lastId = 0L;
+    private Long lastId = 1L;
 
     @Override
-    public User addUser(User user) {
-        user.setId(generateId());
+    public User add(User user) {
+        user.setId(lastId++);
         users.put(user.getId(), user);
-        return users.get(user.getId());
+        return user;
     }
 
     @Override
-    public User updateUser(User user) {
-        checkUserExists(user.getId());
+    public User update(User user) {
+        checkAvailability(user.getId());
         users.replace(user.getId(), user);
-        return users.get(user.getId());
+        return user;
     }
 
     @Override
-    public boolean deleteUser(Long userId) {
-        checkUserExists(userId);
+    public boolean delete(Long userId) {
+        checkAvailability(userId);
         users.remove(userId);
         return !users.containsKey(userId);
     }
 
     @Override
-    public User getUser(Long userId) {
-        checkUserExists(userId);
+    public User get(Long userId) {
+        checkAvailability(userId);
         return users.get(userId);
     }
 
     @Override
-    public Collection<User> getUsers() {
+    public Collection<User> getAll() {
         return new ArrayList<>(users.values());
     }
 
-    private Long generateId() {
-        return ++lastId;
-    }
-
-    private void checkUserExists(Long userId) {
+    private void checkAvailability(Long userId) {
         if (!users.containsKey(userId)) {
             log.debug("Пользователь с id: {} не найден.", userId);
             throw new EntityNotFoundException((String.format("Пользователь с id: %s не найден.", userId)));

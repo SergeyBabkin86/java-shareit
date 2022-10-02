@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.error.exception.ConflictException;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -15,24 +16,21 @@ import static ru.practicum.shareit.user.mapper.UserMapper.mapToUser;
 import static ru.practicum.shareit.user.mapper.UserMapper.mapToUserDto;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
     @Override
-    public UserDto addUser(UserDto userDto) {
+    public UserDto add(UserDto userDto) {
         checkEmailConflict(userDto.getEmail());
-        var user = userRepository.addUser(mapToUser(userDto));
+        var user = userRepository.add(mapToUser(userDto));
         return mapToUserDto(user);
     }
 
     @Override
-    public UserDto updateUser(Long userId, UserDto updUserDto) {
-        var userDto = getUser(userId);
+    public UserDto update(Long userId, UserDto updUserDto) {
+        var userDto = get(userId);
 
         if (updUserDto.getName() != null) {
             userDto.setName(updUserDto.getName());
@@ -42,29 +40,29 @@ public class UserServiceImpl implements UserService {
             userDto.setEmail(updUserDto.getEmail());
         }
 
-        userRepository.updateUser(mapToUser(userDto));
+        userRepository.update(mapToUser(userDto));
         return userDto;
     }
 
     @Override
-    public boolean deleteUser(Long userId) {
-        return userRepository.deleteUser(userId);
+    public boolean delete(Long userId) {
+        return userRepository.delete(userId);
     }
 
     @Override
-    public UserDto getUser(Long userId) {
-        return mapToUserDto(userRepository.getUser(userId));
+    public UserDto get(Long userId) {
+        return mapToUserDto(userRepository.get(userId));
     }
 
     @Override
-    public Collection<UserDto> getUsers() {
-        return userRepository.getUsers().stream()
+    public Collection<UserDto> getAll() {
+        return userRepository.getAll().stream()
                 .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void checkEmailConflict(String email) {
-        getUsers().stream().filter(user -> user.getEmail().equals(email)).forEach(user -> {
+        getAll().stream().filter(user -> user.getEmail().equals(email)).forEach(user -> {
             throw new ConflictException((format("Email: %s уже используется.", email)));
         });
     }

@@ -5,13 +5,13 @@ import ru.practicum.shareit.item.model.Item;
 import java.util.Collection;
 
 public interface ItemRepository {
-    Item addItem(Item item);
+    Item add(Item item);
 
-    Item updateItem(Item item);
+    Item update(Item item);
 
-    Item getItem(Long itemId);
+    Item get(Long itemId);
 
-    Collection<Item> getUsersItems(Long userId);
+    Collection<Item> getForUser(Long userId);
 
-    Collection<Item> searchItems(String searchRequest);
+    Collection<Item> search(String searchRequest);
 }
