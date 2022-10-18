@@ -8,8 +8,10 @@ import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "items")
 public class Item {
