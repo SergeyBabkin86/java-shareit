@@ -28,15 +28,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto update(Long userId, UserDto UserDto) {
+    public UserDto update(Long userId, UserDto userDto) {
         var oldUserDto = getById(userId);
 
-        if (UserDto.getName() != null) {
-            oldUserDto.setName(UserDto.getName());
+        if (userDto.getName() != null) {
+            oldUserDto.setName(userDto.getName());
         }
-        if (UserDto.getEmail() != null && !UserDto.getEmail().equals(oldUserDto.getEmail())) {
-            checkEmailConflict(UserDto.getEmail());
-            oldUserDto.setEmail(UserDto.getEmail());
+        if (userDto.getEmail() != null && !userDto.getEmail().equals(oldUserDto.getEmail())) {
+            checkEmailConflict(userDto.getEmail());
+            oldUserDto.setEmail(userDto.getEmail());
         }
 
         userRepository.save(mapToUser(oldUserDto));
