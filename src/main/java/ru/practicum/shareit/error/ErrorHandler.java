@@ -2,12 +2,14 @@ package ru.practicum.shareit.error;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.practicum.shareit.error.exception.ConflictException;
-import ru.practicum.shareit.error.exception.EntityNotFoundException;
+import ru.practicum.shareit.error.exception.*;
+
+import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
@@ -21,10 +23,23 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public ErrorResponse handleRuntimeException(final RuntimeException e) {
-        log.debug("403 {}", e.getMessage(), e);
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleItemTransactionException(final ItemTransactionException e) {
+        log.debug("400 {}", e.getMessage(), e);
         return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBookingTransactionException(final BookingTransactionException e) {
+        log.debug("400 {}", e.getMessage(), e);
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(EnumStateException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(EnumStateException e) {
+        log.debug("400 {}", e.getMessage(), e);
+        return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
@@ -36,8 +51,8 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleConflictException(final ConflictException e) {
-        log.debug("409 {}", e.getMessage(), e);
+    public ErrorResponse handleEmailConflictException(final EmailValidationException e) {
+        log.error("409 {}", e.getMessage(), e);
         return new ErrorResponse(e.getMessage());
     }
 

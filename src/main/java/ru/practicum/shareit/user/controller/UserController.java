@@ -5,8 +5,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
-import ru.practicum.shareit.util.Create;
-import ru.practicum.shareit.util.Update;
+import ru.practicum.shareit.utilities.Create;
+import ru.practicum.shareit.utilities.Update;
 
 import java.util.Collection;
 
@@ -18,8 +18,8 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public UserDto add(@Validated({Create.class}) @RequestBody UserDto userDto) {
-        return userService.add(userDto);
+    public UserDto save(@Validated({Create.class}) @RequestBody UserDto userDto) {
+        return userService.save(userDto);
     }
 
     @PatchMapping("/{userId}")
@@ -28,17 +28,17 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public boolean delete(@PathVariable Long userId) {
-        return userService.delete(userId);
+    public void delete(@PathVariable Long userId) {
+        userService.deleteById(userId);
     }
 
     @GetMapping("/{userId}")
-    public UserDto get(@PathVariable Long userId) {
-        return userService.get(userId);
+    public UserDto getById(@PathVariable Long userId) {
+        return userService.getById(userId);
     }
 
     @GetMapping()
-    public Collection<UserDto> getAll() {
-        return userService.getAll();
+    public Collection<UserDto> findAll() {
+        return userService.findAll();
     }
 }

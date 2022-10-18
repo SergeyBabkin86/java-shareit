@@ -2,7 +2,7 @@ package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.error.exception.ConflictException;
+import ru.practicum.shareit.error.exception.EmailValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import static java.lang.String.format;
 import static ru.practicum.shareit.user.mapper.UserMapper.mapToUser;
 import static ru.practicum.shareit.user.mapper.UserMapper.mapToUserDto;
+import static ru.practicum.shareit.utilities.Checker.checkUserAvailability;
 
 @Service
 @RequiredArgsConstructor
@@ -22,48 +23,48 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDto add(UserDto userDto) {
-        checkEmailConflict(userDto.getEmail());
-        var user = userRepository.add(mapToUser(userDto));
-        return mapToUserDto(user);
+    public UserDto save(UserDto userDto) {
+        return mapToUserDto(userRepository.save(mapToUser(userDto)));
     }
 
     @Override
-    public UserDto update(Long userId, UserDto updUserDto) {
-        var userDto = get(userId);
+    public UserDto update(Long userId, UserDto UserDto) {
+        var oldUserDto = getById(userId);
 
-        if (updUserDto.getName() != null) {
-            userDto.setName(updUserDto.getName());
+        if (UserDto.getName() != null) {
+            oldUserDto.setName(UserDto.getName());
         }
-        if (updUserDto.getEmail() != null && !updUserDto.getEmail().equals(userDto.getEmail())) {
-            checkEmailConflict(updUserDto.getEmail());
-            userDto.setEmail(updUserDto.getEmail());
+        if (UserDto.getEmail() != null && !UserDto.getEmail().equals(oldUserDto.getEmail())) {
+            checkEmailConflict(UserDto.getEmail());
+            oldUserDto.setEmail(UserDto.getEmail());
         }
 
-        userRepository.update(mapToUser(userDto));
-        return userDto;
+        userRepository.save(mapToUser(oldUserDto));
+        return oldUserDto;
     }
 
     @Override
-    public boolean delete(Long userId) {
-        return userRepository.delete(userId);
+    public void deleteById(Long userId) {
+        checkUserAvailability(userId, userRepository);
+        userRepository.deleteById(userId);
     }
 
     @Override
-    public UserDto get(Long userId) {
-        return mapToUserDto(userRepository.get(userId));
+    public UserDto getById(Long userId) {
+        checkUserAvailability(userId, userRepository);
+        return mapToUserDto(userRepository.findById(userId).get());
     }
 
     @Override
-    public Collection<UserDto> getAll() {
-        return userRepository.getAll().stream()
+    public Collection<UserDto> findAll() {
+        return userRepository.findAll().stream()
                 .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void checkEmailConflict(String email) {
-        getAll().stream().filter(user -> user.getEmail().equals(email)).forEach(user -> {
-            throw new ConflictException((format("Email: %s уже используется.", email)));
+        findAll().stream().filter(user -> user.getEmail().equals(email)).forEach(user -> {
+            throw new EmailValidationException((format("Email: %s уже используется.", email)));
         });
     }
 }
