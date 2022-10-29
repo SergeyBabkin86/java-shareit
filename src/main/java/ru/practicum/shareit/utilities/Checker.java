@@ -3,6 +3,7 @@ package ru.practicum.shareit.utilities;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.error.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import static java.lang.String.format;
@@ -24,6 +25,12 @@ public class Checker {
     public static void checkBookingAvailability(Long bookingId, BookingRepository bookingRepository) {
         if (!bookingRepository.existsById(bookingId)) {
             throw new EntityNotFoundException(format("Бронирование с id: %s не найдена.", bookingId));
+        }
+    }
+
+    public static void checkRequestAvailability(Long requestId, ItemRequestRepository itemRequestRepository) {
+        if (!itemRequestRepository.existsById(requestId)) {
+            throw new EntityNotFoundException(format("Запрос с id: %s не найден.", requestId));
         }
     }
 }

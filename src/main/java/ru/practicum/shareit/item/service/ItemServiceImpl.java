@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.enums.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
@@ -14,8 +15,10 @@ import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
 
+import javax.validation.ValidationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,11 +27,10 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static ru.practicum.shareit.booking.mapper.BookingMapper.toBookingDtoForItem;
-import static ru.practicum.shareit.item.mapper.CommentMapper.mapToComment;
-import static ru.practicum.shareit.item.mapper.CommentMapper.mapToCommentDto;
+import static ru.practicum.shareit.item.mapper.CommentMapper.toComment;
+import static ru.practicum.shareit.item.mapper.CommentMapper.toCommentDto;
 import static ru.practicum.shareit.item.mapper.ItemMapper.*;
-import static ru.practicum.shareit.utilities.Checker.checkItemAvailability;
-import static ru.practicum.shareit.utilities.Checker.checkUserAvailability;
+import static ru.practicum.shareit.utilities.Checker.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,10 +41,21 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
 
+    private final ItemRequestRepository itemRequestRepository;
+
     @Override
     public ItemDto save(Long userId, ItemDto itemDto) {
         checkUserAvailability(userId, userRepository);
-        return mapToItemDto(itemRepository.save(mapToItem(itemDto, userRepository.findById(userId).get())));
+
+        var item = toItem(itemDto);
+        item.setOwner(userRepository.findById(userId).get());
+
+        var requestId = itemDto.getRequestId();
+        if (requestId !=null) {
+            checkRequestAvailability(requestId, itemRequestRepository);
+            item.setItemRequest(itemRequestRepository.findById(requestId).get());
+        }
+        return toItemDto(itemRepository.save(item));
     }
 
     @Override
@@ -64,7 +77,7 @@ public class ItemServiceImpl implements ItemService {
         if (itemDto.getAvailable() != null) {
             oldItem.setAvailable(itemDto.getAvailable());
         }
-        return mapToItemDto(itemRepository.save(oldItem));
+        return toItemDto(itemRepository.save(oldItem));
     }
 
     @Override
@@ -79,7 +92,7 @@ public class ItemServiceImpl implements ItemService {
         checkUserAvailability(userId, userRepository);
 
         var item = itemRepository.findById(itemId).get();
-        var itemDtoWithBooking = mapToItemDtoWithBooking(item);
+        var itemDtoWithBooking = toItemDtoWithBooking(item);
         var comments = commentRepository.findAllByItemId(itemId);
 
         if (item.getOwner().getId().equals(userId)) {
@@ -88,19 +101,26 @@ public class ItemServiceImpl implements ItemService {
 
         if (!comments.isEmpty()) {
             itemDtoWithBooking.setComments(comments
-                    .stream().map(CommentMapper::mapToCommentDto)
+                    .stream().map(CommentMapper::toCommentDto)
                     .collect(Collectors.toList()));
         }
         return itemDtoWithBooking;
     }
 
     @Override
-    public Collection<ItemDtoWithBooking> findAllForUser(Long userId) {
+    public Collection<ItemDtoWithBooking> findAll(Long userId, int from, int size) {
         checkUserAvailability(userId, userRepository);
 
-        var result = itemRepository.findAll().stream()
-                .filter(item -> item.getOwner().getId().equals(userId))
-                .map(ItemMapper::mapToItemDtoWithBooking)
+        if (from < 0 || size <= 0) {
+            throw new ValidationException("Переданы некорректные значения from and size");
+        }
+
+        var page = from / size;
+        var pageable = PageRequest.of(page, size);
+
+        var result = itemRepository.findByOwnerId(userId, pageable)
+                .stream()
+                .map(ItemMapper::toItemDtoWithBooking)
                 .collect(Collectors.toList());
 
         for (ItemDtoWithBooking itemDtoWithBooking : result) {
@@ -109,8 +129,9 @@ public class ItemServiceImpl implements ItemService {
             var comments = commentRepository.findAllByItemId(itemDtoWithBooking.getId());
 
             if (!comments.isEmpty()) {
-                itemDtoWithBooking.setComments(comments.stream()
-                        .map(CommentMapper::mapToCommentDto)
+                itemDtoWithBooking.setComments(comments
+                        .stream()
+                        .map(CommentMapper::toCommentDto)
                         .collect(Collectors.toList()));
             }
         }
@@ -119,13 +140,17 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Collection<ItemDto> search(String text) {
+    public Collection<ItemDto> search(String text, int from, int size) {
+        var page = from / size;
+        var pageable = PageRequest.of(page, size);
+
         if (text.isEmpty()) {
             return new ArrayList<>();
         }
-        return itemRepository.search(text).stream()
+        return itemRepository.search(text, pageable)
+                .stream()
                 .filter(Item::getAvailable)
-                .map(ItemMapper::mapToItemDto)
+                .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
@@ -134,19 +159,25 @@ public class ItemServiceImpl implements ItemService {
         checkUserAvailability(userId, userRepository);
         checkItemAvailability(itemId, itemRepository);
 
-        if (bookingRepository.searchBookingByBookerIdAndItemIdAndEndIsBefore(userId, itemId, LocalDateTime.now())
-                .stream()
-                .noneMatch(booking -> booking.getStatus().equals(Status.APPROVED))) {
+        var item = itemRepository.findById(itemId).orElseThrow();
+        var user =userRepository.findById(userId).orElseThrow();
+
+        var bookings = bookingRepository.searchBookingByBookerIdAndItemIdAndEndIsBeforeAndStatus(userId,
+                itemId,
+                LocalDateTime.now(),
+                Status.APPROVED);
+
+        if (bookings.isEmpty()) {
             throw new BookingTransactionException(format("Пользователь с id: %s не брал в аренду вещь с id: %s.",
                     userId,
                     itemId));
         }
 
-        var comment = mapToComment(commentDto);
-        comment.setItem(itemRepository.findById(itemId).get());
-        comment.setAuthor(userRepository.findById(userId).get());
-
-        return mapToCommentDto(commentRepository.save(comment));
+        var comment = toComment(commentDto);
+        comment.setItem(item);
+        comment.setAuthor(user);
+        commentRepository.save(comment);
+        return  toCommentDto(comment);
     }
 
     private void checkItemOwner(Long userId, Long itemId) {

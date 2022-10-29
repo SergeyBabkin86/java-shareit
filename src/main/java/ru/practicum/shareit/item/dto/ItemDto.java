@@ -23,4 +23,6 @@ public class ItemDto {
 
     @NotNull(groups = {Create.class}, message = "Ну указан статус доступности вещи.")
     private Boolean available;
+
+    private Long requestId;
 }

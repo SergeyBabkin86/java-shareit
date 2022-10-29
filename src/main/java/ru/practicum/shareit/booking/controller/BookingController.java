@@ -1,18 +1,18 @@
 package ru.practicum.shareit.booking.controller;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoSimple;
 import ru.practicum.shareit.booking.service.BookingService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.Collection;
 
 @RestController
 @RequestMapping(path = "/bookings")
-@Slf4j
 @RequiredArgsConstructor
 public class BookingController {
 
@@ -26,15 +26,18 @@ public class BookingController {
 
     @GetMapping
     public Collection<BookingDto> findAll(@RequestHeader("X-Sharer-User-Id") long userId,
-                                          @RequestParam(defaultValue = "ALL") String state) {
-        return bookingService.findAll(userId, state);
+                                          @RequestParam(defaultValue = "ALL") String state,
+                                          @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                          @Positive @RequestParam(defaultValue = "20") int size) {
+        return bookingService.findAll(userId, state, from, size);
     }
-
 
     @GetMapping("/owner")
     public Collection<BookingDto> findAllByOwner(@RequestHeader("X-Sharer-User-Id") long userId,
-                                           @RequestParam(defaultValue = "ALL") String state) {
-        return bookingService.findAllByItemOwnerId(userId, state);
+                                                 @RequestParam(defaultValue = "ALL") String state,
+                                                 @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                 @Positive @RequestParam(defaultValue = "20") int size) {
+        return bookingService.findAllByItemOwnerId(userId, state, from, size);
     }
 
     @PatchMapping("/{bookingId}")

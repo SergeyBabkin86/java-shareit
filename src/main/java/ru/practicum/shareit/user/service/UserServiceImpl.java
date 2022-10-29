@@ -12,8 +12,8 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static ru.practicum.shareit.user.mapper.UserMapper.mapToUser;
-import static ru.practicum.shareit.user.mapper.UserMapper.mapToUserDto;
+import static ru.practicum.shareit.user.mapper.UserMapper.toUser;
+import static ru.practicum.shareit.user.mapper.UserMapper.toUserDto;
 import static ru.practicum.shareit.utilities.Checker.checkUserAvailability;
 
 @Service
@@ -24,7 +24,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto save(UserDto userDto) {
-        return mapToUserDto(userRepository.save(mapToUser(userDto)));
+        return toUserDto(userRepository.save(toUser(userDto)));
     }
 
     @Override
@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
             oldUserDto.setEmail(userDto.getEmail());
         }
 
-        userRepository.save(mapToUser(oldUserDto));
+        userRepository.save(toUser(oldUserDto));
         return oldUserDto;
     }
 
@@ -52,13 +52,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getById(Long userId) {
         checkUserAvailability(userId, userRepository);
-        return mapToUserDto(userRepository.findById(userId).get());
+        return toUserDto(userRepository.findById(userId).get());
     }
 
     @Override
     public Collection<UserDto> findAll() {
         return userRepository.findAll().stream()
-                .map(UserMapper::mapToUserDto)
+                .map(UserMapper::toUserDto)
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 

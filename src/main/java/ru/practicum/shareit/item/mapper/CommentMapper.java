@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Component
 public class CommentMapper {
 
-    public static CommentDto mapToCommentDto(Comment comment) {
+    public static CommentDto toCommentDto(Comment comment) {
         return new CommentDto(comment.getId(),
                 comment.getText(),
                 comment.getAuthor().getName(),
@@ -17,7 +17,7 @@ public class CommentMapper {
         );
     }
 
-    public static Comment mapToComment(CommentDto commentDto) {
+    public static Comment toComment(CommentDto commentDto) {
         return new Comment(commentDto.getId(),
                 commentDto.getText(),
                 null,
