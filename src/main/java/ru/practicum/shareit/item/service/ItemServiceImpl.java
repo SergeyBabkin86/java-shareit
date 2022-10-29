@@ -51,7 +51,7 @@ public class ItemServiceImpl implements ItemService {
         item.setOwner(userRepository.findById(userId).get());
 
         var requestId = itemDto.getRequestId();
-        if (requestId !=null) {
+        if (requestId != null) {
             checkRequestAvailability(requestId, itemRequestRepository);
             item.setItemRequest(itemRequestRepository.findById(requestId).get());
         }
@@ -160,7 +160,7 @@ public class ItemServiceImpl implements ItemService {
         checkItemAvailability(itemId, itemRepository);
 
         var item = itemRepository.findById(itemId).orElseThrow();
-        var user =userRepository.findById(userId).orElseThrow();
+        var user = userRepository.findById(userId).orElseThrow();
 
         var bookings = bookingRepository.searchBookingByBookerIdAndItemIdAndEndIsBeforeAndStatus(userId,
                 itemId,
@@ -177,7 +177,7 @@ public class ItemServiceImpl implements ItemService {
         comment.setItem(item);
         comment.setAuthor(user);
         commentRepository.save(comment);
-        return  toCommentDto(comment);
+        return toCommentDto(comment);
     }
 
     private void checkItemOwner(Long userId, Long itemId) {
