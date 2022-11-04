@@ -13,9 +13,9 @@ public interface ItemService {
 
     ItemDtoWithBooking findById(Long itemId, Long userId);
 
-    Collection<ItemDtoWithBooking> findAllForUser(Long userId);
+    Collection<ItemDtoWithBooking> findAll(Long userId, int from, int size);
 
-    Collection<ItemDto> search(String searchRequest);
+    Collection<ItemDto> search(String searchRequest, int from, int size);
 
     void deleteById(Long itemId);
 
