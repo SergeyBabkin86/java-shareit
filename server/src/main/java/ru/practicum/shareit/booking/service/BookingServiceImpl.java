@@ -40,7 +40,9 @@ public class BookingServiceImpl implements BookingService {
         checkUserAvailability(userId, userRepository);
         checkItemAvailability(bookingDtoSimple.getItemId(), itemRepository);
 
-        var item = itemRepository.findById(bookingDtoSimple.getItemId()).get();
+        var item = itemRepository.findById(bookingDtoSimple.getItemId())
+                .orElseThrow(() -> new EntityNotFoundException(format("Вещь с id: %s не найдена.",
+                        bookingDtoSimple.getItemId())));
         if (!item.getAvailable()) {
             throw new ItemTransactionException(format("Вещь с id: %s не доступна.", item.getId()));
         }
@@ -51,7 +53,8 @@ public class BookingServiceImpl implements BookingService {
 
         var booking = fromSimpleDtoToBooking(bookingDtoSimple);
 
-        booking.setBooker(userRepository.findById(userId).get());
+        booking.setBooker(userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Пользователь с id: %s не найден.", userId))));
         booking.setItem(item);
         booking.setStatus(Status.WAITING);
 
@@ -62,7 +65,8 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto update(Long bookingId, BookingDto bookingDto) {
         checkBookingAvailability(bookingId, bookingRepository);
 
-        var oldBookingDto = toBookingDto(bookingRepository.findById(bookingId).get());
+        var oldBookingDto = toBookingDto(bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Бронирование с id: %s не найдена.", bookingId))));
 
         if (bookingDto.getStart() != null) {
             oldBookingDto.setStart(bookingDto.getStart());
@@ -91,7 +95,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingDto findById(Long bookingId, Long userId) {
         checkBookingAvailability(bookingId, bookingRepository);
-        var booking = bookingRepository.findById(bookingId).get();
+        var booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Бронирование с id: %s не найдена.", bookingId)));
 
         if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwner().getId().equals(userId)) {
             throw new EntityNotFoundException("Запрос бронирования может быть выполнен только автором бронирования " +
@@ -208,7 +213,8 @@ public class BookingServiceImpl implements BookingService {
         checkUserAvailability(userId, userRepository);
         checkBookingAvailability(bookingId, bookingRepository);
 
-        var bookingDto = toBookingDto(bookingRepository.findById(bookingId).get());
+        var bookingDto = toBookingDto(bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Бронирование с id: %s не найдена.", bookingId))));
 
         if (!bookingDto.getItem().getOwner().getId().equals(userId)) {
             throw new EntityNotFoundException("Подтвердить бронирование может только владелец вещи.");

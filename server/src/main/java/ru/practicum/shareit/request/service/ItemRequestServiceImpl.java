@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.request.model.ItemRequestDto;
 import ru.practicum.shareit.request.model.ItemRequestDtoWithItems;
 import ru.practicum.shareit.request.mapper.ItemRequestMapper;
@@ -14,6 +15,7 @@ import javax.validation.ValidationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.lang.String.format;
 import static ru.practicum.shareit.request.mapper.ItemRequestMapper.toItemRequest;
 import static ru.practicum.shareit.request.mapper.ItemRequestMapper.toItemRequestDto;
 import static ru.practicum.shareit.utilities.Checker.checkRequestAvailability;
@@ -32,7 +34,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemRequestDto save(ItemRequestDto itemRequestDto, Long userId) {
         checkUserAvailability(userId, userRepository);
         var itemRequest = toItemRequest(itemRequestDto);
-        itemRequest.setUser(userRepository.findById(userId).get());
+        itemRequest.setUser(userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Пользователь с id: %s не найден.", userId))));
         return toItemRequestDto(itemRequestRepository.save(itemRequest));
     }
 
@@ -68,6 +71,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         checkUserAvailability(userId, userRepository);
         checkRequestAvailability(requestId, itemRequestRepository);
 
-        return mapper.toItemRequestDtoWithItems(itemRequestRepository.findById(requestId).get());
+        return mapper.toItemRequestDtoWithItems(itemRequestRepository.findById(requestId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Запрос с id: %s не найден.", requestId))));
     }
 }

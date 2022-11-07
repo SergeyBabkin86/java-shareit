@@ -8,9 +8,6 @@ import ru.practicum.shareit.request.model.ItemRequestDto;
 import ru.practicum.shareit.request.model.ItemRequestDtoWithItems;
 import ru.practicum.shareit.request.service.ItemRequestService;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.Collection;
 
 @RestController
@@ -24,7 +21,7 @@ public class ItemRequestController {
 
     @PostMapping
     public ItemRequestDto save(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                 @Valid @RequestBody ItemRequestDto itemRequestDto) {
+                               @RequestBody ItemRequestDto itemRequestDto) {
         return itemRequestService.save(itemRequestDto, userId);
     }
 
@@ -35,8 +32,8 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     public Collection<ItemRequestDtoWithItems> findAllRequests(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                               @PositiveOrZero @RequestParam(defaultValue = "0") int from,
-                                                               @Positive @RequestParam(defaultValue = "20") int size) {
+                                                               @RequestParam(defaultValue = "0") int from,
+                                                               @RequestParam(defaultValue = "20") int size) {
         return itemRequestService.findAllRequests(userId, from, size);
     }
 

@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.EmailValidationException;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.user.model.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -52,7 +53,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getById(Long userId) {
         checkUserAvailability(userId, userRepository);
-        return toUserDto(userRepository.findById(userId).get());
+        return toUserDto(userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Пользователь с id: %s не найден.", userId))));
     }
 
     @Override

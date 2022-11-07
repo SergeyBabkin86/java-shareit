@@ -48,12 +48,14 @@ public class ItemServiceImpl implements ItemService {
         checkUserAvailability(userId, userRepository);
 
         var item = toItem(itemDto);
-        item.setOwner(userRepository.findById(userId).get());
+        item.setOwner(userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Пользователь с id: %s не найден.", userId))));
 
         var requestId = itemDto.getRequestId();
         if (requestId != null) {
             checkRequestAvailability(requestId, itemRequestRepository);
-            item.setItemRequest(itemRequestRepository.findById(requestId).get());
+            item.setItemRequest(itemRequestRepository.findById(requestId)
+                    .orElseThrow(() -> new EntityNotFoundException(format("Запрос с id: %s не найден.", requestId))));
         }
         return toItemDto(itemRepository.save(item));
     }
@@ -64,7 +66,8 @@ public class ItemServiceImpl implements ItemService {
         checkItemAvailability(itemId, itemRepository);
         checkItemOwner(userId, itemId);
 
-        var oldItem = itemRepository.findById(itemId).get();
+        var oldItem = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Вещь с id: %s не найдена.", itemId)));
 
         if (itemDto.getName() != null) {
             oldItem.setName(itemDto.getName());
@@ -91,7 +94,8 @@ public class ItemServiceImpl implements ItemService {
         checkItemAvailability(itemId, itemRepository);
         checkUserAvailability(userId, userRepository);
 
-        var item = itemRepository.findById(itemId).get();
+        var item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Вещь с id: %s не найдена.", itemId)));
         var itemDtoWithBooking = toItemDtoWithBooking(item);
         var comments = commentRepository.findAllByItemId(itemId);
 
@@ -181,7 +185,9 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private void checkItemOwner(Long userId, Long itemId) {
-        if (!itemRepository.findById(itemId).get().getOwner().getId().equals(userId)) {
+        if (!itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException(format("Вещь с id: %s не найдена.", itemId)))
+                .getOwner().getId().equals(userId)) {
             throw new EntityNotFoundException((format("Вещь с id: %s не принадлежит пользователю с id: %s.",
                     itemId,
                     userId)));
